@@ -478,50 +478,8 @@
             </div>
         </div>
 
-        <!-- Input for Family Name and Expected Values -->
-        <div class="bg-gray-50 p-6 rounded-lg mb-8 shadow-inner">
-            <h2 class="text-xl font-semibold text-gray-700 mb-5">Audit Family Name</h2>
-            <div class="form-section">
-                <div class="form-field">
-                    <label for="familyNameInput">Family Name to Audit:</label>
-                    <input type="text" id="familyNameInput" placeholder="e.g., RM_STR_COL_CONC_300X450mm">
-                </div>
-                <div class="form-field">
-                    <label for="expectedDiscipline">Expected Discipline (from Project Config):</label>
-                    <input type="text" id="expectedDiscipline" readonly class="bg-gray-200">
-                </div>
-                <div class="form-field">
-                    <label for="expectedCategory">Expected Category (manual override/specific):</label>
-                    <select id="expectedCategory">
-                        <option value="">Select Category</option>
-                    </select>
-                </div>
-                <div class="form-field">
-                    <label for="expectedMaterial">Expected Material (manual override/specific):</label>
-                    <select id="expectedMaterial">
-                        <option value="">Select Material</option>
-                    </select>
-                </div>
-                <div class="form-field">
-                    <label for="expectedDimensions">Expected Dimensions (manual override/specific):</label>
-                    <input type="text" id="expectedDimensions" placeholder="e.g., 300X450"> <!-- Note: No 'mm' here for input -->
-                </div>
-            </div>
-            <div class="flex flex-wrap justify-center gap-4 mt-6">
-                <button id="addFamilyBtn" class="btn-primary">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m0-6H6"></path></svg>
-                    Add Family for Audit
-                </button>
-                <button id="runAuditBtn" class="btn-secondary">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-4m0 0l-4 4m4-4l4 4m-4-4l4-4m-4 4V7"></path></svg>
-                    Run Naming Convention Audit
-                </button>
-                <button id="clearAllBtn" class="btn-danger">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    Clear All
-                </button>
-            </div>
-        </div>
+        <!-- This section for manual family input is now removed as per your request -->
+        <!-- The manual input fields and "Add Family for Audit" button are no longer present. -->
 
         <!-- Databases Display Section -->
         <div class="database-section">
@@ -559,7 +517,7 @@
             </div>
         </div>
 
-        <!-- File Upload Section -->
+        <!-- File Upload Section - Now also contains Run, Export, and Clear buttons -->
         <div class="file-upload-section">
             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v6"></path></svg>
             <p class="text-lg">Upload Family Data</p>
@@ -570,6 +528,22 @@
             </button>
             <p class="text-sm mt-2">Expected columns: Family Name (required), Dimensions (optional)</p>
             <p id="fileUploadStatus" class="text-gray-600 mt-4">No file loaded.</p>
+            
+            <!-- Consolidated action buttons under the browse button -->
+            <div class="flex flex-wrap justify-center gap-4 mt-6">
+                <button id="runAuditBtn" class="btn-secondary">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-4m0 0l-4 4m4-4l4 4m-4-4l4-4m-4 4V7"></path></svg>
+                    Run Audit
+                </button>
+                <button id="exportResultsBtn" class="btn-primary">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Export Results
+                </button>
+                <button id="clearAllBtn" class="btn-danger">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Clear All
+                </button>
+            </div>
         </div>
         
         <!-- Audit Summary Section -->
@@ -664,9 +638,9 @@
 
         const materials = {
             'CONC': 'Concrete', 'STEEL': 'Steel', 'TIM': 'Timber', 'BRK': 'Brick',
-            'GLS': 'Glass', 'ALU': 'Aluminum', 'PLST': 'Plastic', 'TITE': 'Tile',
-            'DRYW': 'Drywall', 'WOD': 'Wood', 'GYS': 'Gypsum', 'INS': 'Insulation',
-            'RUB': 'Rubber', 'CMP': 'Composite', 'FAB': 'Fabric', 'CER': 'Ceramic',
+            'GLS': 'Glass', 'ALU': 'Aluminum',
+            'PLST': 'Plastic', 'TITE': 'Tile', 'DRYW': 'Drywall', 'WOD': 'Wood', 'GYS': 'Gypsum',
+            'INS': 'Insulation', 'RUB': 'Rubber', 'CMP': 'Composite', 'FAB': 'Fabric', 'CER': 'Ceramic',
             'ASPH': 'Asphalt', 'GRAV': 'Gravel', 'SAND': 'Sand', 'ROCK': 'Rock',
             'WAT': 'Water', 'AIR': 'Air'
         };
@@ -680,15 +654,22 @@
         const customParamInput = document.getElementById('customParamInput');
         const addCustomParamBtn = document.getElementById('addCustomParamBtn');
 
-        const familyNameInput = document.getElementById('familyNameInput');
-        const expectedDisciplineInput = document.getElementById('expectedDiscipline'); 
-        const expectedCategorySelect = document.getElementById('expectedCategory');
-        const expectedMaterialSelect = document.getElementById('expectedMaterial');
-        const expectedDimensionsInput = document.getElementById('expectedDimensions');
+        // Removed manual input fields for family names as per request
+        // const familyNameInput = document.getElementById('familyNameInput');
+        // const expectedCategorySelect = document.getElementById('expectedCategory');
+        // const expectedMaterialSelect = document.getElementById('expectedMaterial');
+        // const expectedDimensionsInput = document.getElementById('expectedDimensions');
         
-        const addFamilyBtn = document.getElementById('addFamilyBtn');
+        // Retain expectedDisciplineInput as it's linked to Project Config
+        const expectedDisciplineInput = document.getElementById('expectedDiscipline'); 
+
+        // Removed manual add family button
+        // const addFamilyBtn = document.getElementById('addFamilyBtn');
+
         const runAuditBtn = document.getElementById('runAuditBtn');
         const clearAllBtn = document.getElementById('clearAllBtn');
+        const exportResultsBtn = document.getElementById('exportResultsBtn'); // New export button
+
         const auditResultsTableBody = document.querySelector('#auditResultsTable tbody');
         const noResultsMessage = document.getElementById('noResultsMessage');
 
@@ -1160,6 +1141,65 @@
             });
         }
 
+        /**
+         * Exports the current audit results table data to a CSV file.
+         */
+        function exportAuditResults() {
+            if (auditData.length === 0) {
+                alert('No audit results to export.');
+                return;
+            }
+
+            // Define CSV headers based on table columns
+            const headers = [
+                "Row", "Family Name", "Structure Check", "All Parts Check", 
+                "Discipline Check", "Category Check", "Dimensions Check", 
+                "Overall Status", "Suggestions"
+            ];
+            
+            // Map boolean checks to 'Pass' or 'Fail' for CSV readability
+            const dataToExport = auditData.map((item, index) => ({
+                "Row": index + 1,
+                "Family Name": item.familyName,
+                "Structure Check": item.structureCheck ? "Pass" : "Fail",
+                "All Parts Check": item.allPartsCheck ? "Pass" : "Fail",
+                "Discipline Check": item.disciplineCheck ? "Pass" : "Fail",
+                "Category Check": item.categoryCheck ? "Pass" : "Fail",
+                "Dimensions Check": item.dimensionsCheck ? "Pass" : "Fail",
+                "Overall Status": item.overallStatus,
+                "Suggestions": item.suggestions.join('; ') // Join multiple suggestions with semicolon
+            }));
+
+            // Convert array of objects to CSV string
+            let csv = headers.join(',') + '\n';
+            dataToExport.forEach(row => {
+                const values = headers.map(header => {
+                    const value = row[header];
+                    // Handle values that might contain commas or newlines by enclosing them in quotes
+                    return typeof value === 'string' && (value.includes(',') || value.includes('\n')) 
+                           ? `"${value.replace(/"/g, '""')}"` // Escape double quotes
+                           : value;
+                }).join(',');
+                csv += values + '\n';
+            });
+
+            // Create a Blob and trigger download
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            if (link.download !== undefined) { // Feature detection for download attribute
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'ISO_19650_Audit_Results.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                alert('Your browser does not support downloading files directly. Please copy the data manually.');
+            }
+        }
+
+
         /* --- Event Listeners --- */
 
         // Project Configuration Buttons
@@ -1203,55 +1243,12 @@
             }
         });
 
-        // Add Family for Audit button
-        addFamilyBtn.addEventListener('click', () => {
-            const familyName = familyNameInput.value.trim();
-            const expectedCategory = expectedCategorySelect.value;
-            const expectedMaterial = expectedMaterialSelect.value;
-            const expectedDimensions = expectedDimensionsInput.value.trim();
-
-            if (!familyName) {
-                alert('Please enter a Family Name to audit.');
-                return;
-            }
-
-            // Capture expected values from the form inputs
-            const expectedValues = {
-                discipline: selectedProjectDiscipline,
-                category: expectedCategory,
-                material: expectedMaterial,
-                dimensions: expectedDimensions
-            };
-
-            // Create a new audit item with current convention and expected values
-            const newItem = {
-                id: Date.now(), // Unique ID for the item
-                familyName: familyName,
-                expectedValues: expectedValues,
-                conventionParameters: JSON.parse(JSON.stringify(activeParameters)), // Deep copy of current active parameters
-                separator: separatorSelect.value,
-                selectedProjectDiscipline: selectedProjectDiscipline, 
-                overallStatus: 'PENDING',
-                suggestions: ['Click "Run Audit" to check'],
-                // Initialize individual checks to false, will be updated by performAudit
-                structureCheck: false, 
-                allPartsCheck: false,
-                disciplineCheck: false,
-                categoryCheck: false,
-                materialCheck: false, 
-                dimensionsCheck: false
-            };
-            auditData.push(newItem);
-            renderAuditResults(); // Update UI
-
-            // Clear input field after adding
-            familyNameInput.value = '';
-        });
+        // Removed addFamilyBtn event listener as the button is removed.
 
         // Run Naming Convention Audit button
         runAuditBtn.addEventListener('click', () => {
             if (auditData.length === 0) {
-                alert('No families added to audit. Please add some family names first.');
+                alert('No families added to audit. Please upload data from an Excel file first.');
                 return;
             }
 
@@ -1281,6 +1278,9 @@
         cancelClearBtn.addEventListener('click', () => {
             confirmationModal.classList.remove('open'); // Hide modal
         });
+
+        // New: Export Results button event listener
+        exportResultsBtn.addEventListener('click', exportAuditResults);
 
         // Excel File Upload Handlers
         browseExcelBtn.addEventListener('click', () => {
@@ -1439,8 +1439,8 @@
         /* --- Initial Setup Calls --- */
 
         // Populate dropdowns and database tables on page load
-        populateSelect(expectedCategorySelect, categories);
-        populateSelect(expectedMaterialSelect, materials);
+        // Removed expectedCategorySelect and expectedMaterialSelect from here
+        // as their corresponding form fields are removed.
         populateDatabaseTable(disciplinesDbBody, disciplines);
         populateDatabaseTable(categoriesDbBody, categories);
 
