@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISO 19650 Naming Convention Auditor</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SheetJS library for Excel/CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <style>
+        /* Base styles for body and container */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        /* Form section styling */
+        .form-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .form-field {
+            flex: 1 1 calc(33% - 20px); /* 3 columns on larger screens */
+            min-width: 280px; /* Minimum width for fields */
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #374151;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+
+        /* Button styling */
+        button {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .btn-primary {
+            background-color: #22c55e;
+            color: #ffffff;
+        }
+        .btn-primary:hover {
+            background-color: #16a34a;
+        }
+        .btn-secondary {
+            background-color: #3b82f6;
+            color: #ffffff;
+        }
+        .btn-secondary:hover {
+            background-color: #2563eb;
+        }
+        .btn-danger {
+            background-color: #ef4444;
+            color: #ffffff;
+        }
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        /* Table styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden; /* Ensures rounded corners on table */
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            background-color: #f9fafb;
+            font-weight: 700;
+            color: #4b5563;
+            cursor: pointer;
+            position: relative;
+        }
+        th .sort-icon {
+            margin-left: 5px;
+            font-size: 0.8em;
+            vertical-align: middle;
+        }
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Status and summary card styling */
+        .summary-card {
+            background-color: #f3f4f6;
+            border-radius: 8px;
+            padding: 15px 20px;
+            text-align: center;
+            flex: 1;
+            min-width: 200px;
+        }
+        .summary-value {
+            font-size: 2.25rem; /* text-4xl */
+            font-weight: 700; /* font-bold */
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+        .summary-label {
+            font-size: 0.875rem; /* text-sm */
+            color: #6b7280;
+        }
+        .success-icon { color: #22c55e; }
+        .fail-icon { color: #ef4444; }
+
+        /* Modal styling */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+        .modal-content h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #1f2937;
+        }
+        .modal-content p {
+            margin-bottom: 25px;
+            color: #4b5563;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        /* Project Configuration Grid */
+        .project-config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .project-config-button {
+            background-color: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            color: #4b5563;
+        }
+        .project-config-button.active {
+            background-color: #e0f2fe; /* Light blue */
+            border-color: #3b82f6; /* Blue */
+            color: #1e40af; /* Darker blue */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        .project-config-button:hover:not(.active) {
+            background-color: #edf2f7;
+            border-color: #cbd5e1;
+        }
+
+        /* Naming Convention Builder styles */
+        .current-convention-display {
+            background-color: #e2e8f0;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #2d3748;
+            word-break: break-all;
+            margin-bottom: 20px;
+        }
+        .active-parameters-list {
+            background-color: #f9fafb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
+        }
+        .active-parameter-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .active-parameter-item:last-child {
+            margin-bottom: 0;
+        }
+        .param-drag-handle {
+            cursor: grab;
+            margin-right: 15px;
+            color: #9ca3af;
+        }
+        .param-name {
+            font-weight: 500;
+            color: #374151;
+            flex-grow: 1;
+        }
+        .param-required {
+            background-color: #fee2e2;
+            color: #991b1b;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-right: 10px;
+        }
+        .param-actions button {
+            background: none;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+            color: #6b7280;
+            transition: color 0.2s;
+        }
+        .param-actions button:hover {
+            color: #1f2937;
+        }
+        .param-actions button svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .add-parameters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .add-parameters-grid button {
+            background-color: #e0f2fe;
+            color: #2563eb;
+            border: 1px solid #bfdbfe;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .add-parameters-grid button:hover {
+            background-color: #a7d9f7;
+        }
+        .custom-param-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Database display section */
+        .database-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .database-card {
+            flex: 1 1 calc(50% - 10px);
+            background-color: #f9fafb;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            min-width: 300px;
+        }
+        .database-card h3 {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 10px;
+        }
+        .database-card table {
+            width: 100%;
+            font-size: 0.9rem;
+            margin-top: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .database-card th, .database-card td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #ebf4f5;
+        }
+        .database-card th {
+            background-color: #eef2f5;
+        }
+        .database-card tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* File upload section */
+        .file-upload-section {
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            background-color: #f9fafb;
+            margin-top: 30px;
+        }
+        .file-upload-section p {
+            color: #6b7280;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* Donut chart styles */
+        .chart-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap; /* Allow wrapping for responsiveness */
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .chart-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: #374151;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .form-field {
+                flex: 1 1 100%; /* Single column on smaller screens */
+            }
+            .summary-cards-container {
+                flex-direction: column;
+            }
+            .summary-card {
+                margin-bottom: 15px;
+            }
+            .database-card {
+                flex: 1 1 100%;
+            }
+            .chart-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center py-8">
+
+    <div class="container mx-auto px-6 py-8 bg-white shadow-lg rounded-xl">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Advanced BIM Audit Tool</h1>
+
+        <!-- Navigation Tabs (Simplified) -->
+        <div class="flex border-b border-gray-200 mb-8">
+            <button class="px-6 py-3 text-blue-600 border-b-2 border-blue-600 font-semibold focus:outline-none">Naming Convention Audit</button>
+            <!-- Placeholder for other tabs if needed in the future -->
+        </div>
+
+        <!-- Project Configuration Section -->
+        <div class="bg-gray-50 p-6 rounded-lg mb-8 shadow-inner">
+            <h2 class="text-xl font-semibold text-gray-700 mb-5">Project Configuration</h2>
+            <div class="project-config-grid">
+                <button class="project-config-button active" data-discipline="STR">Structure <br><span class="text-sm text-gray-500">Code: STR</span></button>
+                <button class="project-config-button" data-discipline="ARC">Architecture <br><span class="text-sm text-gray-500">Code: ARC</span></button>
+                <button class="project-config-button" data-discipline="ELE">Electrical <br><span class="text-sm text-gray-500">Code: ELE</span></button>
+                <button class="project-config-button" data-discipline="GEN">Other <br><span class="text-sm text-gray-500">Code: GEN</span></button>
+            </div>
+        </div>
+
+        <!-- Naming Convention Builder Section -->
+        <div class="bg-gray-50 p-6 rounded-lg mb-8 shadow-inner">
+            <h2 class="text-xl font-semibold text-gray-700 mb-5">Naming Convention Builder</h2>
+            <label class="block text-gray-700 font-semibold mb-2">Current Convention:</label>
+            <div id="currentConventionDisplay" class="current-convention-display mb-4">
+                RM_Discipline_Category_Material_Dimensionsmm
+            </div>
+
+            <div class="flex items-center gap-4 mb-5">
+                <label for="separatorSelect" class="font-semibold text-gray-700">Separator:</label>
+                <select id="separatorSelect" class="w-auto px-4 py-2 border border-gray-300 rounded-lg text-gray-700">
+                    <option value="_">Underscore (_)</option>
+                    <!-- Add more separators here if needed -->
+                </select>
+            </div>
+
+            <h3 class="text-lg font-semibold text-gray-700 mb-3">Active Parameters:</h3>
+            <div id="activeParametersList" class="active-parameters-list">
+                <!-- Dynamic active parameters will be rendered here by JavaScript -->
+            </div>
+
+            <h3 class="text-lg font-semibold text-gray-700 mb-3">Add Parameters:</h3>
+            <div class="add-parameters-grid">
+                <button data-param="Type">+ Type</button>
+                <button data-param="Size">+ Size</button>
+                <button data-param="Level">+ Level</button>
+                <button data-param="Phase">+ Phase</button>
+                <button data-param="Manufacturer">+ Manufacturer</button>
+                <button data-param="Model">+ Model</button>
+                <button data-param="Code">+ Code</button>
+                <button data-param="System">+ System</button>
+                <button data-param="Location">+ Location</button>
+                <button data-param="Mark">+ Mark</button>
+                <button data-param="Assembly">+ Assembly</button>
+            </div>
+            <div class="custom-param-input flex">
+                <input type="text" id="customParamInput" placeholder="Enter custom parameter name" class="flex-grow">
+                <button id="addCustomParamBtn" class="btn-secondary whitespace-nowrap !px-4 !py-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m0-6H6"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Input for Family Name and Expected Values -->
+        <div class="bg-gray-50 p-6 rounded-lg mb-8 shadow-inner">
+            <h2 class="text-xl font-semibold text-gray-700 mb-5">Audit Family Name</h2>
+            <div class="form-section">
+                <div class="form-field">
+                    <label for="familyNameInput">Family Name to Audit:</label>
+                    <input type="text" id="familyNameInput" placeholder="e.g., RM_STR_COL_CONC_300X450mm">
+                </div>
+                <div class="form-field">
+                    <label for="expectedDiscipline">Expected Discipline (from Project Config):</label>
+                    <input type="text" id="expectedDiscipline" readonly class="bg-gray-200">
+                </div>
+                <div class="form-field">
+                    <label for="expectedCategory">Expected Category (manual override/specific):</label>
+                    <select id="expectedCategory">
+                        <option value="">Select Category</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="expectedMaterial">Expected Material (manual override/specific):</label>
+                    <select id="expectedMaterial">
+                        <option value="">Select Material</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="expectedDimensions">Expected Dimensions (manual override/specific):</label>
+                    <input type="text" id="expectedDimensions" placeholder="e.g., 300X450"> <!-- Note: No 'mm' here for input -->
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center gap-4 mt-6">
+                <button id="addFamilyBtn" class="btn-primary">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m0-6H6"></path></svg>
+                    Add Family for Audit
+                </button>
+                <button id="runAuditBtn" class="btn-secondary">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-4m0 0l-4 4m4-4l4 4m-4-4l4-4m-4 4V7"></path></svg>
+                    Run Naming Convention Audit
+                </button>
+                <button id="clearAllBtn" class="btn-danger">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Clear All
+                </button>
+            </div>
+        </div>
+
+        <!-- Databases Display Section -->
+        <div class="database-section">
+            <div class="database-card">
+                <h3>Engineering Disciplines Database</h3>
+                <div class="overflow-y-auto max-h-64">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Discipline</th>
+                            </tr>
+                        </thead>
+                        <tbody id="disciplinesDbBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="database-card">
+                <h3>Revit Categories Database</h3>
+                <div class="overflow-y-auto max-h-64">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Category</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoriesDbBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- File Upload Section -->
+        <div class="file-upload-section">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v6"></path></svg>
+            <p class="text-lg">Upload Family Data</p>
+            <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="hidden">
+            <button id="browseExcelBtn" class="btn-secondary !bg-blue-500 !text-white hover:!bg-blue-600">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                Browse Excel File
+            </button>
+            <p class="text-sm mt-2">Expected columns: Family Name (required), Dimensions (optional)</p>
+            <p id="fileUploadStatus" class="text-gray-600 mt-4">No file loaded.</p>
+        </div>
+        
+        <!-- Audit Summary Section -->
+        <div class="bg-gray-100 p-6 rounded-lg mb-8 mt-8">
+            <h2 class="text-xl font-semibold text-gray-700 mb-5 text-center">Naming Convention Audit Summary</h2>
+            <div class="flex flex-wrap justify-around gap-4 summary-cards-container">
+                <div class="summary-card">
+                    <div id="totalFamilies" class="summary-value">0</div>
+                    <div class="summary-label">Total Families Audited</div>
+                </div>
+                <div class="summary-card">
+                    <div id="compliantNames" class="summary-value text-green-600">0</div>
+                    <div class="summary-label">Compliant Names</div>
+                </div>
+                <div class="summary-card">
+                    <div id="namingViolations" class="summary-value text-red-600">0</div>
+                    <div class="summary-label">Naming Violations</div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="auditDonutChart" width="200" height="200"></canvas>
+                <div id="chartLegend" class="chart-legend">
+                    <!-- Legend will be populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Audit Results Section -->
+        <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
+            <h2 class="text-xl font-semibold text-gray-700 mb-5">Detailed Naming Convention Results</h2>
+            <div class="overflow-x-auto rounded-lg">
+                <table id="auditResultsTable">
+                    <thead>
+                        <tr>
+                            <th data-sort-key="row">Row <span class="sort-icon"></span></th>
+                            <th data-sort-key="familyName">Family Name <span class="sort-icon"></span></th>
+                            <th data-sort-key="structureCheck">Structure <span class="sort-icon"></span></th>
+                            <th data-sort-key="allPartsCheck">All Parts <span class="sort-icon"></span></th>
+                            <th data-sort-key="disciplineCheck">Discipline <span class="sort-icon"></span></th>
+                            <th data-sort-key="categoryCheck">Category <span class="sort-icon"></span></th>
+                            <th data-sort-key="dimensionsCheck">Dimensions <span class="sort-icon"></span></th>
+                            <th data-sort-key="overallStatus">Overall <span class="sort-icon"></span></th>
+                            <th data-sort-key="suggestions">Suggestions <span class="sort-icon"></span></th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Audit results will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+                <p id="noResultsMessage" class="text-center text-gray-500 mt-4 hidden">No audit results to display.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content">
+            <h3>Confirm Clear All</h3>
+            <p>Are you sure you want to clear all audit data? This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button id="cancelClear" class="btn-secondary">Cancel</button>
+                <button id="confirmClear" class="btn-danger">Clear All</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data for Disciplines, Categories, and Materials
+        const disciplines = {
+            'STR': 'Structure',
+            'ARC': 'Architecture',
+            'ELE': 'Electrical',
+            'MEP': 'Mechanical, Electrical, Plumbing',
+            'PLM': 'Plumbing',
+            'HVAC': 'Heating, Ventilation, Air Conditioning',
+            'CIV': 'Civil',
+            'LND': 'Landscape',
+            'FIR': 'Fire Protection',
+            'FAC': 'Facilities Management',
+            'GEN': 'General'
+        };
+
+        const categories = {
+            'DRW': 'Drawings', 'MDL': 'Models', 'RPT': 'Reports', 'CAL': 'Calculations',
+            'DWG': 'Detail Drawings', 'SPC': 'Specifications', 'BIM': 'Building Information Models',
+            'COL': 'Columns', 'BAM': 'Beams', 'SLA': 'Slabs', 'WAL': 'Walls', 'DOO': 'Doors',
+            'WIN': 'Windows', 'ROO': 'Roofs', 'FLD': 'Foundations', 'PIP': 'Piping',
+            'DUC': 'Ductwork', 'CAB': 'Cables', 'LUM': 'Luminaires', 'EQU': 'Equipment',
+            'PMP': 'Pumps', 'VLV': 'Valves', 'FAN': 'Fans'
+        };
+
+        const materials = {
+            'CONC': 'Concrete', 'STEEL': 'Steel', 'TIM': 'Timber', 'BRK': 'Brick',
+            'GLS': 'Glass', 'ALU': 'Aluminum', 'PLST': 'Plastic', 'TITE': 'Tile',
+            'DRYW': 'Drywall', 'WOD': 'Wood', 'GYS': 'Gypsum', 'INS': 'Insulation',
+            'RUB': 'Rubber', 'CMP': 'Composite', 'FAB': 'Fabric', 'CER': 'Ceramic',
+            'ASPH': 'Asphalt', 'GRAV': 'Gravel', 'SAND': 'Sand', 'ROCK': 'Rock',
+            'WAT': 'Water', 'AIR': 'Air'
+        };
+
+        // DOM Elements
+        const projectConfigButtons = document.querySelectorAll('.project-config-button');
+        const currentConventionDisplay = document.getElementById('currentConventionDisplay');
+        const separatorSelect = document.getElementById('separatorSelect');
+        const activeParametersList = document.getElementById('activeParametersList');
+        const addParameterButtons = document.querySelectorAll('.add-parameters-grid button');
+        const customParamInput = document.getElementById('customParamInput');
+        const addCustomParamBtn = document.getElementById('addCustomParamBtn');
+
+        const familyNameInput = document.getElementById('familyNameInput');
+        const expectedDisciplineInput = document.getElementById('expectedDiscipline'); 
+        const expectedCategorySelect = document.getElementById('expectedCategory');
+        const expectedMaterialSelect = document.getElementById('expectedMaterial');
+        const expectedDimensionsInput = document.getElementById('expectedDimensions');
+        
+        const addFamilyBtn = document.getElementById('addFamilyBtn');
+        const runAuditBtn = document.getElementById('runAuditBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const auditResultsTableBody = document.querySelector('#auditResultsTable tbody');
+        const noResultsMessage = document.getElementById('noResultsMessage');
+
+        const totalFamiliesSpan = document.getElementById('totalFamilies');
+        const compliantNamesSpan = document.getElementById('compliantNames');
+        const namingViolationsSpan = document.getElementById('namingViolations');
+
+        const confirmationModal = document.getElementById('confirmationModal');
+        const confirmClearBtn = document.getElementById('confirmClear');
+        const cancelClearBtn = document.getElementById('cancelClear');
+
+        const disciplinesDbBody = document.getElementById('disciplinesDbBody');
+        const categoriesDbBody = document.getElementById('categoriesDbBody');
+
+        const browseExcelBtn = document.getElementById('browseExcelBtn');
+        const excelFileInput = document.getElementById('excelFileInput');
+        const fileUploadStatus = document.getElementById('fileUploadStatus');
+
+        const auditDonutChart = document.getElementById('auditDonutChart');
+        const chartCtx = auditDonutChart.getContext('2d');
+        const chartLegend = document.getElementById('chartLegend');
+
+
+        let auditData = []; 
+        let currentSortColumn = null;
+        let currentSortDirection = 'asc'; 
+
+        // Default active parameters for the naming convention
+        let activeParameters = [
+            { name: 'RM', required: true, editable: false }, 
+            { name: 'Discipline', required: true, editable: false },
+            { name: 'Category', required: true, editable: false },
+            { name: 'Material', required: false, editable: true },
+            { name: 'Dimensions', required: false, editable: true, suffix: 'mm' }
+        ];
+
+        let selectedProjectDiscipline = 'STR'; // Default selected project discipline for new entries
+
+        /**
+         * Populates a select element with options from a given data map.
+         * @param {HTMLSelectElement} selectElement - The select element to populate.
+         * @param {Object} dataMap - A key-value pair object (e.g., { 'CODE': 'Description' }).
+         */
+        function populateSelect(selectElement, dataMap) {
+            selectElement.innerHTML = '<option value="">Select</option>';
+            for (const key in dataMap) {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = `${key} (${dataMap[key]})`;
+                selectElement.appendChild(option);
+            }
+        }
+
+        /**
+         * Populates a table body with data from a given map.
+         * @param {HTMLTableSectionElement} tbodyElement - The tbody element to populate.
+         * @param {Object} dataMap - A key-value pair object.
+         */
+        function populateDatabaseTable(tbodyElement, dataMap) {
+            tbodyElement.innerHTML = '';
+            for (const key in dataMap) {
+                const row = tbodyElement.insertRow();
+                row.innerHTML = `
+                    <td class="px-3 py-2 text-gray-700 font-medium">${key}</td>
+                    <td class="px-3 py-2 text-gray-600">${dataMap[key]}</td>
+                `;
+            }
+        }
+
+        /**
+         * Renders the active parameters in the Naming Convention Builder UI.
+         * Updates the displayed current convention string.
+         */
+        function renderActiveParameters() {
+            activeParametersList.innerHTML = '';
+            const separator = separatorSelect.value;
+            let currentConventionString = '';
+
+            activeParameters.forEach((param, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'active-parameter-item';
+                itemDiv.setAttribute('data-index', index);
+
+                itemDiv.innerHTML = `
+                    <span class="param-drag-handle">&#9776;</span>
+                    <span class="param-name">${param.name}</span>
+                    ${param.required ? '<span class="param-required">Required</span>' : ''}
+                    <div class="param-actions ml-auto flex items-center gap-2">
+                        ${index > 0 ? `<button onclick="moveParameter(${index}, -1)" title="Move Up">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                        </button>` : ''}
+                        ${index < activeParameters.length - 1 ? `<button onclick="moveParameter(${index}, 1)" title="Move Down">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                        </button>` : ''}
+                        ${param.editable ? `<button onclick="removeParameter(${index})" title="Remove Parameter">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2A9 9 0 111 10a9 9 0 0118 0z"></path></svg>
+                        </button>` : ''}
+                    </div>
+                `;
+                activeParametersList.appendChild(itemDiv);
+
+                currentConventionString += param.name;
+                if (param.suffix) {
+                    currentConventionString += param.suffix;
+                }
+                if (index < activeParameters.length - 1) {
+                    currentConventionString += separator;
+                }
+            });
+            currentConventionDisplay.textContent = currentConventionString;
+        }
+
+        /**
+         * Adds a new parameter to the activeParameters list.
+         * @param {string} name - The name of the parameter.
+         * @param {boolean} required - Whether the parameter is required.
+         * @param {boolean} editable - Whether the parameter can be removed/moved.
+         * @param {string} suffix - A suffix for the parameter (e.g., 'mm' for Dimensions).
+         */
+        function addParameter(name, required = false, editable = true, suffix = '') {
+            const newParam = { name, required, editable, suffix };
+            activeParameters.push(newParam);
+            renderActiveParameters();
+        }
+
+        /**
+         * Removes a parameter from the activeParameters list by index.
+         * @param {number} index - The index of the parameter to remove.
+         */
+        function removeParameter(index) {
+            if (activeParameters[index].editable) {
+                activeParameters.splice(index, 1);
+                renderActiveParameters();
+            } else {
+                alert(`The "${activeParameters[index].name}" parameter is required and cannot be removed.`);
+            }
+        }
+
+        /**
+         * Moves a parameter up or down in the activeParameters list.
+         * @param {number} index - The current index of the parameter.
+         * @param {number} direction - -1 to move up, 1 to move down.
+         */
+        function moveParameter(index, direction) { 
+            if ((direction === -1 && index === 0) || (direction === 1 && index === activeParameters.length - 1)) {
+                return; // Cannot move beyond bounds
+            }
+            // Prevent moving fixed parameters from their initial positions
+            if (activeParameters[index].name === 'RM' && index === 0 && direction === 1) return; // RM can't move down if it's the first
+            if (activeParameters[index].name === 'RM' && index > 0 && direction === -1) return; // RM can't move up if it's not the first (should always be fixed at 0)
+
+
+            const newIndex = index + direction;
+            [activeParameters[index], activeParameters[newIndex]] = [activeParameters[newIndex], activeParameters[index]];
+            renderActiveParameters();
+        }
+
+        // Expose functions to global scope for onclick attributes in dynamically generated HTML
+        window.removeParameter = removeParameter;
+        window.moveParameter = moveParameter;
+
+        /**
+         * Returns an HTML string for a checkmark or cross icon based on boolean value.
+         * @param {boolean} isPassed - True for checkmark, false for cross.
+         * @returns {string} HTML string for the icon.
+         */
+        function getCheckIcon(isPassed) {
+            return isPassed ? '<span class="success-icon">&#10003;</span>' : '<span class="fail-icon">&#x2717;</span>';
+        }
+
+        /**
+         * Renders the audit results table and updates the summary counts.
+         */
+        function renderAuditResults() {
+            auditResultsTableBody.innerHTML = ''; 
+            if (auditData.length === 0) {
+                noResultsMessage.classList.remove('hidden');
+            } else {
+                noResultsMessage.classList.add('hidden');
+                auditData.forEach((item, index) => {
+                    const row = auditResultsTableBody.insertRow();
+                    row.innerHTML = `
+                        <td class="text-gray-700">${index + 1}</td>
+                        <td class="font-medium text-blue-700">${item.familyName}</td>
+                        <td>${getCheckIcon(item.structureCheck)}</td>
+                        <td>${getCheckIcon(item.allPartsCheck)}</td>
+                        <td>${getCheckIcon(item.disciplineCheck)}</td>
+                        <td>${getCheckIcon(item.categoryCheck)}</td>
+                        <td>${getCheckIcon(item.dimensionsCheck)}</td>
+                        <td class="font-bold ${item.overallStatus === 'PASS' ? 'text-green-600' : 'text-red-600'}">${item.overallStatus}</td>
+                        <td class="text-sm text-gray-600">${item.suggestions.join(', ') || 'N/A'}</td>
+                        <td>
+                            <button onclick="removeItem(${item.id})" class="text-red-500 hover:text-red-700 text-lg">
+                                &times;
+                            </button>
+                        </td>
+                    `;
+                });
+            }
+            updateSummary();
+            drawDonutChart(); // Redraw chart on data change
+        }
+
+        /**
+         * Removes an item from the audit data based on its unique ID.
+         * @param {number} id - The unique ID of the item to remove.
+         */
+        function removeItem(id) {
+            auditData = auditData.filter(item => item.id !== id);
+            renderAuditResults();
+        }
+
+        /**
+         * Updates the total, compliant, and violation counts in the summary section.
+         */
+        function updateSummary() {
+            totalFamiliesSpan.textContent = auditData.length;
+            const compliantCount = auditData.filter(item => item.overallStatus === 'PASS').length;
+            compliantNamesSpan.textContent = compliantCount;
+            namingViolationsSpan.textContent = auditData.length - compliantCount;
+        }
+
+        /**
+         * Performs the naming convention audit for a single item.
+         * The audit rules are applied dynamically based on the stored convention parameters for that item.
+         * @param {Object} item - The audit item containing familyName, expectedValues, conventionParameters, etc.
+         * @returns {Object} The audit result for the item, including individual checks and overall status.
+         */
+        function performAudit(item) {
+            const { familyName, conventionParameters, separator, selectedProjectDiscipline, expectedValues } = item;
+            const parts = familyName.split(separator);
+            const result = {
+                id: item.id,
+                familyName: familyName,
+                overallStatus: 'FAIL',
+                suggestions: [],
+                // Initialize all individual checks to true. They will be set to false if a specific rule fails.
+                structureCheck: true, 
+                allPartsCheck: true,
+                disciplineCheck: true, 
+                categoryCheck: true,   
+                materialCheck: true,   
+                dimensionsCheck: true  
+            };
+
+            // Rule 1: Check if the family name starts with 'RM' (fixed prefix)
+            if (parts[0] !== 'RM') {
+                result.structureCheck = false;
+                result.suggestions.push('Prefix should be \'RM\'.');
+            }
+
+            // Rule 2: Check if the number of parts matches the defined convention length
+            if (parts.length !== conventionParameters.length) {
+                result.allPartsCheck = false;
+                result.suggestions.push(`Expected ${conventionParameters.length} parts based on convention, found ${parts.length}.`);
+            }
+
+            let allConventionSpecificChecksPass = true; // Tracks pass/fail for parameters defined in the convention
+            let currentPartIndex = 0;
+
+            // Iterate through each parameter defined in the convention for this specific item
+            for (const param of conventionParameters) {
+                const actualPart = parts[currentPartIndex];
+                let expectedValue = expectedValues[param.name.toLowerCase()]; 
+                
+                // Special handling for Discipline: its expected value comes from the stored project discipline
+                if (param.name === 'Discipline') {
+                    expectedValue = selectedProjectDiscipline;
+                }
+
+                // If the actual part is missing and it's a required parameter, mark as failure
+                if (!actualPart && param.required) { 
+                    result.suggestions.push(`Missing required part for '${param.name}'.`);
+                    allConventionSpecificChecksPass = false; 
+                    // Explicitly mark individual checks as false if their part is missing and required
+                    if (param.name === 'Discipline') result.disciplineCheck = false;
+                    if (param.name === 'Category') result.categoryCheck = false;
+                    if (param.name === 'Dimensions') result.dimensionsCheck = false; // Only if dimension is required
+                    currentPartIndex++;
+                    continue; // Move to next parameter
+                } else if (!actualPart) {
+                    // If part is missing but not required, implicitly passes this check
+                    currentPartIndex++;
+                    continue; 
+                }
+
+                let paramCheckPassed = true;
+                let specificSuggestion = '';
+
+                // Apply specific validation rules based on parameter name
+                switch (param.name) {
+                    case 'RM':
+                        // Already handled by structureCheck, no additional check here
+                        break;
+                    case 'Discipline':
+                        const effectiveExpectedDiscipline = selectedProjectDiscipline;
+                        if (actualPart.toUpperCase() !== effectiveExpectedDiscipline.toUpperCase()) {
+                            paramCheckPassed = false;
+                            specificSuggestion = `Discipline mismatch: Expected '${effectiveExpectedDiscipline}', found '${actualPart}'.`;
+                            result.disciplineCheck = false;
+                        }
+                        break;
+                    case 'Category':
+                        if ((!expectedValue && !categories[actualPart.toUpperCase()]) || (expectedValue && actualPart.toUpperCase() !== expectedValue.toUpperCase())) {
+                            paramCheckPassed = false;
+                            specificSuggestion = `Category mismatch or invalid: Expected '${expectedValue || 'a valid code'}', found '${actualPart}'.`;
+                            result.categoryCheck = false;
+                        }
+                        break;
+                    case 'Material':
+                        if ((!expectedValue && !materials[actualPart.toUpperCase()]) || (expectedValue && actualPart.toUpperCase() !== expectedValue.toUpperCase())) {
+                            paramCheckPassed = false;
+                            specificSuggestion = `Material mismatch or invalid: Expected '${expectedValue || 'a valid code'}', found '${actualPart}'.`;
+                            result.materialCheck = false; 
+                        }
+                        break;
+                    case 'Dimensions':
+                        const actualNumericPart = actualPart.toLowerCase().replace(/mm$/, ''); 
+                        const expectedNumericPart = expectedValue ? expectedValue.toLowerCase().replace(/mm$/, '') : ''; 
+
+                        const actualHasMM = actualPart.toLowerCase().endsWith('mm');
+                        const conventionRequiresMM = param.suffix === 'mm'; 
+
+                        if (actualNumericPart === expectedNumericPart) {
+                            if (conventionRequiresMM) {
+                                if (actualHasMM) {
+                                    result.dimensionsCheck = true; 
+                                    if (expectedValue && !expectedValue.toLowerCase().endsWith('mm')) { 
+                                        specificSuggestion = `Dimensions note: Expected value '${expectedValue}' was missing 'mm' suffix, but family name '${actualPart}' is correctly formatted.`;
+                                    }
+                                } else { 
+                                    paramCheckPassed = false; 
+                                    specificSuggestion = `Dimensions format issue: Naming convention requires 'mm' suffix. Found '${actualPart}'.`;
+                                    result.dimensionsCheck = false;
+                                }
+                            } else { // Convention does NOT require 'mm' suffix
+                                result.dimensionsCheck = true; 
+                            }
+                        } else { // Numeric parts do not match
+                            paramCheckPassed = false;
+                            specificSuggestion = `Dimensions mismatch: Expected '${expectedValue || 'a valid dimension'}', found '${actualPart}'.`;
+                            result.dimensionsCheck = false;
+                        }
+                        break;
+                    default:
+                        // For generic/custom parameters: if an expected value is provided, it must match.
+                        if (expectedValue && actualPart !== expectedValue) {
+                            paramCheckPassed = false;
+                            specificSuggestion = `${param.name} mismatch: Expected '${expectedValue}', found '${actualPart}'.`;
+                        } else if (param.required && !actualPart) {
+                            // This case is largely covered by the initial missing required part check, but safe to include.
+                            paramCheckPassed = false;
+                            specificSuggestion = `Required parameter '${param.name}' is missing.`;
+                        }
+                        break;
+                }
+
+                if (!paramCheckPassed) {
+                    result.suggestions.push(specificSuggestion);
+                    allConventionSpecificChecksPass = false;
+                } else if (specificSuggestion && specificSuggestion.startsWith('Dimensions note:')) { 
+                     result.suggestions.push(specificSuggestion);
+                }
+                currentPartIndex++;
+            }
+
+            // Final determination of overall status
+            // An item passes overall if all fundamental checks (RM prefix, correct number of parts) pass,
+            // AND all specific checks for the parameters included in *its* convention pass.
+            let overallPass = result.structureCheck && result.allPartsCheck;
+
+            // Check individual parameter checks that are part of the convention
+            for (const param of conventionParameters) {
+                switch(param.name) {
+                    case 'Discipline': if (!result.disciplineCheck) overallPass = false; break;
+                    case 'Category': if (!result.categoryCheck) overallPass = false; break;
+                    case 'Material': if (!result.materialCheck) overallPass = false; break;
+                    case 'Dimensions': if (!result.dimensionsCheck) overallPass = false; break;
+                    // For other custom parameters, their 'paramCheckPassed' status (which feeds into allConventionSpecificChecksPass) handles it.
+                    // If allConventionSpecificChecksPass is false, overallPass will already be false.
+                }
+            }
+
+            if (overallPass && allConventionSpecificChecksPass) {
+                result.overallStatus = 'PASS';
+                // Filter suggestions to only include 'Dimensions note' if it's a PASS
+                result.suggestions = result.suggestions.filter(s => s.startsWith('Dimensions note:')); 
+                if (result.suggestions.length === 0) {
+                    result.suggestions = ['None'];
+                }
+            } else {
+                result.overallStatus = 'FAIL';
+                if (result.suggestions.length === 0) {
+                     result.suggestions.push('Review convention and expected values.');
+                }
+            }
+            return result;
+        }
+
+        /**
+         * Draws the donut chart showing compliant vs. non-compliant percentages.
+         */
+        function drawDonutChart() {
+            const compliantCount = auditData.filter(item => item.overallStatus === 'PASS').length;
+            const nonCompliantCount = auditData.filter(item => item.overallStatus === 'FAIL').length;
+            const totalCount = auditData.length;
+
+            chartCtx.clearRect(0, 0, auditDonutChart.width, auditDonutChart.height); // Clear canvas before drawing
+
+            if (totalCount === 0) {
+                chartLegend.innerHTML = '<div class="text-center text-gray-500">No data to display chart.</div>';
+                return;
+            }
+
+            const centerX = auditDonutChart.width / 2;
+            const centerY = auditDonutChart.height / 2;
+            const radius = Math.min(centerX, centerY) * 0.8;
+            const innerRadius = radius * 0.6; // Creates the donut hole
+
+            const passPercentage = (compliantCount / totalCount) * 100;
+            const failPercentage = (nonCompliantCount / totalCount) * 100;
+
+            const data = [
+                { label: 'Compliant', value: compliantCount, color: '#22c55e', percentage: passPercentage },
+                { label: 'Non-Compliant', value: nonCompliantCount, color: '#ef4444', percentage: failPercentage }
+            ];
+
+            let startAngle = 0;
+            chartLegend.innerHTML = ''; // Clear existing legend
+
+            data.forEach(slice => {
+                if (slice.value === 0) return; // Don't draw slices with 0 value
+
+                const sliceAngle = (slice.value / totalCount) * Math.PI * 2;
+                const endAngle = startAngle + sliceAngle;
+
+                // Draw outer arc
+                chartCtx.beginPath();
+                chartCtx.arc(centerX, centerY, radius, startAngle, endAngle);
+                // Draw inner arc (reversed to close the donut shape)
+                chartCtx.arc(centerX, centerY, innerRadius, endAngle, startAngle, true); 
+                chartCtx.closePath();
+                chartCtx.fillStyle = slice.color;
+                chartCtx.fill();
+
+                // Draw percentage text on slices
+                const textAngle = startAngle + sliceAngle / 2;
+                const textX = centerX + (radius + innerRadius) / 2 * Math.cos(textAngle);
+                const textY = centerY + (radius + innerRadius) / 2 * Math.sin(textAngle);
+
+                chartCtx.fillStyle = '#ffffff'; 
+                chartCtx.font = '12px Inter';
+                chartCtx.textAlign = 'center';
+                chartCtx.textBaseline = 'middle';
+                if (slice.percentage >= 5) { 
+                    chartCtx.fillText(`${slice.percentage.toFixed(1)}%`, textX, textY);
+                }
+
+                // Add legend item
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                legendItem.innerHTML = `
+                    <div class="legend-color" style="background-color: ${slice.color};"></div>
+                    <span>${slice.label}: ${slice.value} (${slice.percentage.toFixed(1)}%)</span>
+                `;
+                chartLegend.appendChild(legendItem);
+
+                startAngle = endAngle;
+            });
+        }
+
+        /* --- Event Listeners --- */
+
+        // Project Configuration Buttons
+        projectConfigButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                projectConfigButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                selectedProjectDiscipline = button.getAttribute('data-discipline');
+                expectedDisciplineInput.value = selectedProjectDiscipline; 
+            });
+        });
+
+        // Separator selection in Naming Convention Builder
+        separatorSelect.addEventListener('change', renderActiveParameters);
+
+        // Add pre-defined parameters to convention
+        addParameterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const paramName = button.getAttribute('data-param');
+                // Prevent adding duplicate parameters
+                if (!activeParameters.some(p => p.name === paramName)) {
+                    addParameter(paramName);
+                } else {
+                    alert(`Parameter '${paramName}' is already active.`);
+                }
+            });
+        });
+
+        // Add custom parameter to convention
+        addCustomParamBtn.addEventListener('click', () => {
+            const customName = customParamInput.value.trim();
+            if (customName) {
+                if (!activeParameters.some(p => p.name === customName)) {
+                    addParameter(customName, false, true); 
+                    customParamInput.value = '';
+                } else {
+                    alert(`Custom parameter '${customName}' already exists.`);
+                }
+            } else {
+                alert('Please enter a name for the custom parameter.');
+            }
+        });
+
+        // Add Family for Audit button
+        addFamilyBtn.addEventListener('click', () => {
+            const familyName = familyNameInput.value.trim();
+            const expectedCategory = expectedCategorySelect.value;
+            const expectedMaterial = expectedMaterialSelect.value;
+            const expectedDimensions = expectedDimensionsInput.value.trim();
+
+            if (!familyName) {
+                alert('Please enter a Family Name to audit.');
+                return;
+            }
+
+            // Capture expected values from the form inputs
+            const expectedValues = {
+                discipline: selectedProjectDiscipline,
+                category: expectedCategory,
+                material: expectedMaterial,
+                dimensions: expectedDimensions
+            };
+
+            // Create a new audit item with current convention and expected values
+            const newItem = {
+                id: Date.now(), // Unique ID for the item
+                familyName: familyName,
+                expectedValues: expectedValues,
+                conventionParameters: JSON.parse(JSON.stringify(activeParameters)), // Deep copy of current active parameters
+                separator: separatorSelect.value,
+                selectedProjectDiscipline: selectedProjectDiscipline, 
+                overallStatus: 'PENDING',
+                suggestions: ['Click "Run Audit" to check'],
+                // Initialize individual checks to false, will be updated by performAudit
+                structureCheck: false, 
+                allPartsCheck: false,
+                disciplineCheck: false,
+                categoryCheck: false,
+                materialCheck: false, 
+                dimensionsCheck: false
+            };
+            auditData.push(newItem);
+            renderAuditResults(); // Update UI
+
+            // Clear input field after adding
+            familyNameInput.value = '';
+        });
+
+        // Run Naming Convention Audit button
+        runAuditBtn.addEventListener('click', () => {
+            if (auditData.length === 0) {
+                alert('No families added to audit. Please add some family names first.');
+                return;
+            }
+
+            // Map over auditData and perform audit for each item
+            auditData = auditData.map(item => {
+                return performAudit(item);
+            });
+            renderAuditResults(); // Update UI with audit results
+        });
+
+        // Clear All button (with confirmation modal)
+        clearAllBtn.addEventListener('click', () => {
+            if (auditData.length === 0) {
+                alert('There is no data to clear.');
+                return;
+            }
+            confirmationModal.classList.add('open'); // Show confirmation modal
+        });
+
+        confirmClearBtn.addEventListener('click', () => {
+            auditData = []; // Clear all audit data
+            renderAuditResults(); // Update UI to show empty state
+            confirmationModal.classList.remove('open'); // Hide modal
+            fileUploadStatus.textContent = 'No file loaded.'; // Reset file upload status
+        });
+
+        cancelClearBtn.addEventListener('click', () => {
+            confirmationModal.classList.remove('open'); // Hide modal
+        });
+
+        // Excel File Upload Handlers
+        browseExcelBtn.addEventListener('click', () => {
+            excelFileInput.click(); // Programmatically click the hidden file input
+        });
+
+        excelFileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) {
+                fileUploadStatus.textContent = 'No file selected.';
+                return;
+            }
+
+            fileUploadStatus.textContent = `Loading ${file.name}...`;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 }); // Read data as array of arrays (including header)
+
+                    if (jsonRows.length === 0) {
+                        fileUploadStatus.textContent = `Empty file: ${file.name}.`;
+                        return;
+                    }
+
+                    const header = jsonRows[0];
+                    let familyNameColIndex = -1;
+                    let dimensionsColIndex = -1; 
+
+                    if (header) {
+                        familyNameColIndex = header.findIndex(h => typeof h === 'string' && (h.toLowerCase().includes('family name') || h.toLowerCase().includes('familyname')));
+                        dimensionsColIndex = header.findIndex(h => typeof h === 'string' && (h.toLowerCase().includes('dimensions') || h.toLowerCase().includes('dimension')));
+                    }
+                    
+                    if (familyNameColIndex === -1) {
+                        fileUploadStatus.textContent = `Error: 'Family Name' column not found in ${file.name}.`;
+                        alert("Error: The Excel/CSV file must contain a column named 'Family Name' or 'FamilyName'.");
+                        return;
+                    }
+
+                    const loadedFamilies = [];
+                    for (let i = 1; i < jsonRows.length; i++) { // Start from second row (after header)
+                        const row = jsonRows[i];
+                        const familyName = row[familyNameColIndex];
+                        const dimensions = (dimensionsColIndex !== -1 && row[dimensionsColIndex]) ? String(row[dimensionsColIndex]).trim() : '';
+
+                        if (typeof familyName === 'string' && familyName.trim() !== '') {
+                            const newItem = {
+                                id: Date.now() + i, // Unique ID
+                                familyName: familyName.trim(),
+                                expectedValues: { 
+                                    discipline: selectedProjectDiscipline, 
+                                    category: '', 
+                                    material: '', 
+                                    dimensions: dimensions // Load dimensions if available from Excel
+                                },
+                                conventionParameters: JSON.parse(JSON.stringify(activeParameters)), // Capture current convention
+                                separator: separatorSelect.value,
+                                selectedProjectDiscipline: selectedProjectDiscipline,
+                                overallStatus: 'PENDING',
+                                suggestions: ['Click "Run Audit" to check'],
+                                structureCheck: false, 
+                                allPartsCheck: false,
+                                disciplineCheck: false,
+                                categoryCheck: false,
+                                materialCheck: false, 
+                                dimensionsCheck: false
+                            };
+                            loadedFamilies.push(newItem);
+                        }
+                    }
+
+                    if (loadedFamilies.length > 0) {
+                        auditData = auditData.concat(loadedFamilies); // Add new families to existing data
+                        renderAuditResults(); // Update UI
+                        fileUploadStatus.textContent = `${loadedFamilies.length} families loaded successfully from ${file.name}.`;
+                    } else {
+                        fileUploadStatus.textContent = `No valid family names found in ${file.name}.`;
+                    }
+
+                } catch (error) {
+                    console.error('Error reading Excel file:', error);
+                    fileUploadStatus.textContent = `Error processing file: ${error.message}`;
+                    alert(`Failed to process Excel file: ${error.message}. Please ensure it's a valid Excel or CSV file.`);
+                }
+            };
+            reader.readAsArrayBuffer(file); // Read file as array buffer for XLSX.read
+        });
+
+        // Sorting functionality for the results table
+        document.querySelectorAll('#auditResultsTable th').forEach(header => {
+            header.addEventListener('click', () => {
+                const sortKey = header.getAttribute('data-sort-key');
+                if (!sortKey) return;
+
+                // Toggle sort direction if clicking the same column
+                if (currentSortColumn === sortKey) {
+                    currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSortColumn = sortKey;
+                    currentSortDirection = 'asc'; // Default to ascending for new column
+                }
+
+                // Clear existing sort icons
+                document.querySelectorAll('#auditResultsTable th .sort-icon').forEach(icon => {
+                    icon.textContent = '';
+                });
+
+                // Add new sort icon to the clicked header
+                const sortIcon = header.querySelector('.sort-icon');
+                if (currentSortDirection === 'asc') {
+                    sortIcon.textContent = '▲';
+                } else {
+                    sortIcon.textContent = '▼';
+                }
+
+                // Sort the auditData array
+                auditData.sort((a, b) => {
+                    let valA = a[sortKey];
+                    let valB = b[sortKey];
+
+                    // Handle boolean values (true/false checks)
+                    if (typeof valA === 'boolean' && typeof valB === 'boolean') {
+                        valA = valA ? 1 : 0;
+                        valB = valB ? 1 : 0;
+                    } 
+                    // Handle 'overallStatus' custom sort order
+                    else if (sortKey === 'overallStatus') {
+                        const statusOrder = { 'PASS': 1, 'PENDING': 2, 'FAIL': 3 }; 
+                        valA = statusOrder[valA] || 99; // Fallback for unexpected status
+                        valB = statusOrder[valB] || 99;
+                    } 
+                    // Handle string comparisons (case-insensitive)
+                    else if (typeof valA === 'string') {
+                        valA = valA.toLowerCase();
+                        valB = valB.toLowerCase();
+                    }
+
+                    if (valA < valB) {
+                        return currentSortDirection === 'asc' ? -1 : 1;
+                    }
+                    if (valA > valB) {
+                        return currentSortDirection === 'asc' ? 1 : -1;
+                    }
+                    return 0; // Values are equal
+                });
+
+                renderAuditResults(); // Re-render table with sorted data
+            });
+        });
+
+        /* --- Initial Setup Calls --- */
+
+        // Populate dropdowns and database tables on page load
+        populateSelect(expectedCategorySelect, categories);
+        populateSelect(expectedMaterialSelect, materials);
+        populateDatabaseTable(disciplinesDbBody, disciplines);
+        populateDatabaseTable(categoriesDbBody, categories);
+
+        // Set initial project discipline value in the input field
+        expectedDisciplineInput.value = selectedProjectDiscipline;
+
+        // Render the initial state of the naming convention builder and audit results table
+        renderActiveParameters();
+        renderAuditResults(); // This will also draw the initial empty chart
+    </script>
+</body>
+</html>
